@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Manager - マネーマネージャー</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- SCREEN 1: LOGIN -->
+        <div id="login-screen" class="screen active">
+            <div class="login-header">
+                <span class="jp-logo">〒</span>
+                <h2>Money Manager</h2>
+                <p>マネーマネージャーへようこそ</p>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-card">
+                    <label>ユーザーID (User ID)</label>
+                    <input type="text" placeholder="student123" required>
+                </div>
+                <div class="input-card">
+                    <label>パスワード (Password)</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">ログイン</button>
+            </form>
+        </div>
+
+        <!-- MAIN APP CONTENT -->
+        <div id="main-app" class="screen">
+            
+            <header class="jp-header">
+                <div class="logo-area">
+                    <span class="jp-logo">〒</span>
+                    <span class="app-title">Money Manager</span>
+                </div>
+                <div class="user-status" onclick="switchPage('profile')">マイページ</div>
+            </header>
+
+            <main class="content-area">
+                
+                <!-- Dynamic Alert Banner for Over-Spending -->
+                <div id="budget-warning" class="warning-banner" style="display: none;">
+                    ⚠️ <strong>予算オーバーの警告!</strong><br>
+                    本日の支出が上限を超えました。このペースだと今月末に資金不足になります！
+                </div>
+
+                <!-- TAB 1: HOME (残高 & 概要) -->
+                <section id="page-home" class="page-content active-page">
+                    <div class="balance-card">
+                        <p class="card-label">今月の残り利用可能額</p>
+                        <h1 class="main-balance">¥<span id="disp-remaining">0</span></h1>
+                        <div class="daily-badge">
+                            <span>1日あたりの目標上限:</span>
+                            <strong>¥<span id="disp-daily-limit">0</span></strong>
+                        </div>
+                    </div>
+
+                    <div class="summary-grid">
+                        <div class="grid-box">
+                            <span class="box-label">今月の給与 / 収入</span>
+                            <p class="box-value text-green">¥<span id="disp-income">0</span></p>
+                        </div>
+                        <div class="grid-box">
+                            <span class="box-label">固定費合計</span>
+                            <p class="box-value text-red">¥<span id="disp-fixed-total">0</span></p>
+                        </div>
+                        <div class="grid-box">
+                            <span class="box-label">今月の累計支出</span>
+                            <p class="box-value text-red">¥<span id="disp-expense-total">0</span></p>
+                        </div>
+                        <div class="grid-box">
+                            <span class="box-label">今月の貯金目標</span>
+                            <p class="box-value text-green">¥<span id="disp-savings">0</span></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: 給与 & 固定費 (Salary & Fixed Expenses) -->
+                <section id="page-fixed" class="page-content">
+                    <h3 class="page-title">収入・固定費の設定</h3>
+                    
+                    <div class="input-card highlight-input">
+                        <label>今月の給料 / 収入 (Salary)</label>
+                        <div class="currency-input">
+                            <input type="number" id="input-income" value="120000" onchange="updateCalculations()">
+                            <span class="unit">円</span>
+                        </div>
+                    </div>
+
+                    <div class="input-card">
+                        <label>家賃 (House Rent)</label>
+                        <div class="currency-input">
+                            <input type="number" id="input-rent" value="40000" onchange="updateCalculations()">
+                            <span class="unit">円</span>
+                        </div>
+                    </div>
+                    <div class="input-card">
+                        <label>貯金 (Savings)</label>
+                        <div class="currency-input">
+                            <input type="number" id="input-savings" value="15000" onchange="updateCalculations()">
+                            <span class="unit">円</span>
+                        </div>
+                    </div>
+                    <div class="input-card">
+                        <label>健康保険 (Health Insurance)</label>
+                        <div class="currency-input">
+                            <input type="number" id="input-insurance" value="2500" onchange="updateCalculations()">
+                            <span class="unit">円</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: 毎日の支出 (Daily Input) -->
+                <section id="page-daily" class="page-content">
+                    <h3 class="page-title">日々の支出入力</h3>
+                    
+                    <div class="add-expense-card">
+                        <div class="input-card">
+                            <label>金額 (Amount)</label>
+                            <div class="currency-input">
+                                <input type="number" id="expense-amount" placeholder="500">
+                                <span class="unit">円</span>
+                            </div>
+                        </div>
+                        <div class="input-card">
+                            <label>メモ・用途 (Note)</label>
+                            <input type="text" id="expense-note" placeholder="例: 食費, 電車代">
+                        </div>
+                        <button class="btn-primary" onclick="addDailyExpense()">支出を記録する</button>
+                    </div>
+
+                    <h4 class="sub-title">本日の支出履歴</h4>
+                    <ul id="expense-list" class="expense-list">
+                        <!-- Items populated dynamically -->
+                    </ul>
+                </section>
+
+                <!-- TAB 4: マイページ (Profile) -->
+                <section id="page-profile" class="page-content">
+                    <h3 class="page-title">マイページ</h3>
+                    <div class="profile-card">
+                        <div class="avatar">〒</div>
+                        <h4>留学生 太郎 (Student User)</h4>
+                        <p>ステータス: アクティブ</p>
+                    </div>
+                    <button class="btn-logout" onclick="handleLogout()">ログアウト</button>
+                </section>
+            </main>
+
+            <!-- Bottom Navigation Bar -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" onclick="switchPage('home')">
+                    <span class="icon">🏠</span>
+                    <span class="label">ホーム</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('fixed')">
+                    <span class="icon">⚙️</span>
+                    <span class="label">固定費・給料</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('daily')">
+                    <span class="icon">📝</span>
+                    <span class="label">支出入力</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('profile')">
+                    <span class="icon">👤</span>
+                    <span class="label">マイページ</span>
+                </button>
+            </nav>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
